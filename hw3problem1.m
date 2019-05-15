@@ -32,6 +32,8 @@ for index=1:T/dt
     % Then predict belief using dynamics x_dot = u and some amount of noise
     % Then use measurement z_t to calculate weights for the particles
     % Then resample from the weighted distribution
+    timeval = dt * index;
+    
     x_tminus1 = xprevMat;
     u_tminus1 = uprevMat;
     x_t = [];
@@ -62,13 +64,34 @@ for index=1:T/dt
     tmp = x_bar_t;
     tmp(4,:) = tmp(4,:)/weightSumsOrig;
     x_bar_t_redone_weights = tmp;
+    x_bar_t_redone_weights = transpose(sortrows(transpose(x_bar_t_redone_weights), 4));
+    
+    sums = [];
+    sums(1) = x_bar_t_redone_weights(4,1);
+    for m=2:M
+        sums(m) = sums(m-1) + x_bar_t_redone_weights(4,m);
+    end
 
     % RESAMPLING
     for m=1:M
         % draw i with probability w_t_m
-
+        r = rand(); % get a rand in [0,1] normal dist
+        start = -1; % initialize val
+        keepGoing = 1; % initial behavior is to keep checking
+        ind = M; % default value is the last one with highest probability
+        for n=1:M
+            start = sums(n);
+            if (keepGoing == 1) & (start >= r)
+                ind = n;
+                keepGoing = 0;
+            end
+        end
+        resampled_x_t_i = x_bar_t_redone_weights(:,ind);
         % add x_t_i to X_t
+        x_t(m,:) = resampled_x_t_i;
     end
+    
+    
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
