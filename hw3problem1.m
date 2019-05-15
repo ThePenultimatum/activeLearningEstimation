@@ -1,0 +1,98 @@
+clear
+global M T dt
+
+M = 100;
+T = 6;
+dt = 0.1;
+
+%noiseDist = makedist("Normal");    %%%%%%%%%%%%%%%%%%%%%%%5 change this to get specific variance
+%noise_ts = random(noiseDist, [T/dt, 5]);
+%random("normal", T/dt, 5, -1, 1, %rand(T*M, 5) - 0.5; % matrix of noises for T*M rows, 3 cols for x's and 2 for u's
+% fix this noise to be a proper distribution%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+xprev = [0; 0; pi/2]; %%%%%%%%%%%%%%%%%%%%%%%%%%%% MAKE an x_t matrix with noise for init
+uprev = [1 -0.5];
+
+xprevMat = [];
+uprevMat = [];
+
+for ind=1:M
+    xprevMat(:,ind) = xprev;
+    uprevMat(:,ind) = uprev;
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Perform timesteps
+for index=1:T/dt
+    
+    % Start with belief at time t-1
+    % Then predict belief using dynamics x_dot = u and some amount of noise
+    % Then use measurement z_t to calculate weights for the particles
+    % Then resample from the weighted distribution
+    x_tminus1 = xprevMat;
+    u_tminus1 = uprevMat;
+    x_t = [];
+    x_bar_t = [];
+    weights_t = [];
+    %%%%%%%%%%%%%%%%%%%        ??????????? How to get the weight, how to
+    %%%%%%%%%%%%%%%%%%%        "sample"
+    %noise_t = noise_ts(index,:);
+    noiseDist = makedist("Normal");    %%%%%%%%%%%%%%%%%%%%%%%5 change this to get specific variance
+    
+    noise_ts_m = random(noiseDist, [M, 5]);
+    
+    % PREDICTION    
+    for m=1:M
+        noise_t = noise_ts_m(m,:);
+        % sample x_t_m from p(x_t|u_t, x_t-1_m)
+        x_t_m_sample = xdotWithOneXAndNoise(x_tminus1(:,m), u_tminus1(:,m), noise_t);
+        % set weights w_t_m = p(z_t|x_t_m)
+        w_t_m = getProb(x_t_m_sample);
+        weights_t(m) = w_t_m;
+        % add pair (x_t_m, w_t_m) to X_bar_t
+        x_bar_t(:,m) = [x_t_m_sample(1); x_t_m_sample(2); x_t_m_sample(3) ; w_t_m];
+    end
+    
+    weights_t;
+    
+    weightSumsOrig = sum(weights_t);
+    tmp = x_bar_t;
+    tmp(4,:) = tmp(4,:)/weightSumsOrig;
+    x_bar_t_redone_weights = tmp;
+
+    % RESAMPLING
+    for m=1:M
+        % draw i with probability w_t_m
+
+        % add x_t_i to X_t
+    end
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function xvectdot = xdotWithFullXAndIndex(x, u, index)
+  xvectdot = [cos(x(3, index)) * u(1, index); sin(x(3, index)) * u(1, index); u(2, index)];
+end
+
+function xvectdot = xdotWithOneX(x, u)
+  xvectdot = [cos(x(3)) * u(1); sin(x(3)) * u(1); u(2)];
+end
+
+function xvectdot = xdotWithOneXAndNoise(x, u, noise)
+  xvectdot = [cos(x(3)) * u(1) + noise(1); sin(x(3)) * u(1) + noise(2); u(2) + noise(3)];
+end
+
+function prob = getProb(x)
+  %sigSquared = 1; % variance
+  %mu = 0; % mean
+  %x
+  sigVarianceMat = [1 0 0; 0 1 0; 0 0 1]; %[1 0 0 0 0; 0 1 0 0 0; 0 0 1 0 0; 0 0 0 1 0; 0 0 0 0 1];
+  muMeanVect = [0; 0; 0]; %[0; 0; 0; 0; 0];
+  diffVect = x-muMeanVect;
+  %sqrt(det(2*pi*sigVarianceMat)) 
+  %transpose(diffVect)*inv(sigVarianceMat)*diffVect
+  %exp(-0.5*transpose(diffVect)*inv(sigVarianceMat)*diffVect)
+  prob = (1/(sqrt(det(2*pi*sigVarianceMat)))) * exp(-0.5*transpose(diffVect)*inv(sigVarianceMat)*diffVect);%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5 check pos and neg;;;; is a probability, should be in [0,1]
+end
