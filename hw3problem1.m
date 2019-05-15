@@ -5,6 +5,8 @@ M = 100;
 T = 6;
 dt = 0.1;
 
+getOrigTrajectory = false;
+
 %noiseDist = makedist("Normal");    %%%%%%%%%%%%%%%%%%%%%%%5 change this to get specific variance
 %noise_ts = random(noiseDist, [T/dt, 5]);
 %random("normal", T/dt, 5, -1, 1, %rand(T*M, 5) - 0.5; % matrix of noises for T*M rows, 3 cols for x's and 2 for u's
@@ -18,10 +20,14 @@ uprev = [1 -0.5];
 xprevMat = [];
 uprevMat = [];
 
+%xmats all
+
 for ind=1:M
     xprevMat(:,ind) = xprev;
     uprevMat(:,ind) = uprev;
 end
+
+xmeans = [];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -50,7 +56,12 @@ for index=1:T/dt
     for m=1:M
         noise_t = noise_ts_m(m,:);
         % sample x_t_m from p(x_t|u_t, x_t-1_m)
-        x_t_m_sample = xdotWithOneXAndNoise(x_tminus1(:,m), u_tminus1(:,m), noise_t);
+        if getOrigTrajectory
+            x_t_m_dot = xdotWithOneXAndNoise(x_tminus1(:,m), u_tminus1(:,m), [0;0;0]);%noise_t);
+        else
+            x_t_m_dot = xdotWithOneXAndNoise(x_tminus1(:,m), u_tminus1(:,m), noise_t);
+        end
+        x_t_m_sample = [x_tminus1(1) + dt * x_t_m_dot(1); x_tminus1(2) + dt * x_t_m_dot(2); x_tminus1(3) + dt * x_t_m_dot(3)];
         % set weights w_t_m = p(z_t|x_t_m)
         w_t_m = getProb(x_t_m_sample);
         weights_t(m) = w_t_m;
@@ -58,7 +69,7 @@ for index=1:T/dt
         x_bar_t(:,m) = [x_t_m_sample(1); x_t_m_sample(2); x_t_m_sample(3) ; w_t_m];
     end
     
-    weights_t;
+    %weights_t;
     
     weightSumsOrig = sum(weights_t);
     tmp = x_bar_t;
@@ -91,8 +102,29 @@ for index=1:T/dt
         x_t(m,:) = resampled_x_t_i;
     end
     
+    xprevMat = transpose(x_t(:,1:3));
+    xmeans(:, index) = [mean(x_t(:,1)); mean(x_t(:,2))];
+    
+    %for k = 1:M
+        %plot(timeval * ones(M, 1),)
+    %    plot(x_t(k,1),x_t(k,2))
+    %    if k == 1
+    %       hold on
+    %    end
+    %end
+    %hold off
+    plot(x_t(:,1),x_t(:,2),"o")
+    hold on
+    
     
 end
+plot(xmeans(1,:),xmeans(2,:),"o")
+xlim([-1 4]); 
+ylim([-1 5]);
+title("Position");
+xlabel("x1");
+ylabel("x2");
+hold off
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function xvectdot = xdotWithFullXAndIndex(x, u, index)
