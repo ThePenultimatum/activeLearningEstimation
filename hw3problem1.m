@@ -86,16 +86,18 @@ for index=1:T/dt
     % RESAMPLING
     for m=1:M
         % draw i with probability w_t_m
-        r = rand(); % get a rand in [0,1] normal dist
+        r = rand(); % get a rand in [0,1] uniform dist
         start = -1; % initialize val
         keepGoing = 1; % initial behavior is to keep checking
         ind = M; % default value is the last one with highest probability
+        last = 1;
         for n=1:M
             start = sums(n);
             if (keepGoing == 1) & (start >= r)
-                ind = n;
+                ind = last;%n;
                 keepGoing = 0;
             end
+            last = n;
         end
         resampled_x_t_i = x_bar_t_redone_weights(:,ind);
         % add x_t_i to X_t
@@ -118,7 +120,7 @@ for index=1:T/dt
     
     
 end
-plot(xmeans(1,:),xmeans(2,:),"o")
+plot(xmeans(1,:),xmeans(2,:), "k-")
 xlim([-1 4]); 
 ylim([-1 5]);
 title("Position");
