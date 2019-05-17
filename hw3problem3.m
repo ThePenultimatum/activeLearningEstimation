@@ -1,7 +1,7 @@
 clear
 global M T dt
 
-M = 10;
+M = 1;
 T = 1;
 dt = 0.1;
 
@@ -92,7 +92,12 @@ for m=1:M
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+        %%%%%%%%%%%%%%%%%%%%% Commenting out the perturbation code to
+        %%%%%%%%%%%%%%%%%%%%% change the way I am getting the perturbations
+        %%%%%%%%%%%%%%%%%%%%% to just get the ideal one once and then
+        %%%%%%%%%%%%%%%%%%%%% perturb that one 10 times and then
+        %%%%%%%%%%%%%%%%%%%%% recalculate the results for the 10 different
+        %%%%%%%%%%%%%%%%%%%%% series of K matrices
 
         %%% Perturbed prediction phase
         % Calculate the noise to be used
@@ -134,6 +139,15 @@ for m=1:M
     perturbedXhatsAll = [perturbedXhatsAll, perturbedXhats];
     perturbedXpredictionsAll = [perturbedXpredictionsAll, perturbedXpredictions];
     perturbedKksAll = [perturbedKksAll, perturbedKks];%%%%%%%%%%%%%%%% WRONG APPENDING
+    
+    
+    
+    plot([1, xpredictions(1,:)],[1, xpredictions(2,:)],"b");%,".")
+    hold on;
+    %plot(perturbedXpredictionsAll(1,:),perturbedXpredictionsAll(2,:),"g");%,".")
+    plot([1,perturbedXpredictions(1,:)],[1,perturbedXpredictions(2,:)],"g");%,".")
+    hold on;
+    
 end
 
 vals1 = [];
@@ -148,16 +162,16 @@ for i=1:T/dt
     vals4(i) = pkkminus1s(2,2,i);
 end
 
-plot(xpredictionsAll(1,:),xpredictionsAll(2,:));%,".")
+plot(originalTrajectoryVals_t(1,:),originalTrajectoryVals_t(2,:),"r");
 xlim([-10 10]); 
 ylim([-10 10]);
 title("Position");
 xlabel("x1");
 ylabel("x2");
-hold on;
-plot(originalTrajectoryVals_t(1,:),originalTrajectoryVals_t(2,:));
-hold on;
-plot(perturbedXpredictionsAll(1,:),perturbedXpredictionsAll(2,:));%,".")
+%hold on;
+%plot(originalTrajectoryVals_t(1,:),originalTrajectoryVals_t(2,:));
+%hold on;
+%plot(perturbedXpredictionsAll(1,:),perturbedXpredictionsAll(2,:));%,".")
 hold off;
 
 
