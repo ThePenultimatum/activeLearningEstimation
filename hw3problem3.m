@@ -1,8 +1,8 @@
 clear
 global M T dt
 
-M = 100;
-T = 1;
+M = 1000;
+T = 100;
 dt = 0.1;
 
 getOrigTrajectory = false;
@@ -28,78 +28,101 @@ R_k = [1 0; 0 1];
 
 perturbedXhats = [];
 perturbedXpredictions = [];
-perturbedkks = [];
+perturbedKks = [];
+
+xhatsAll = [];
+xpredictionsAll = [];
+pkkminus1sAll = [];
+perturbedXhatsAll = [];
+perturbedXpredictionsAll = [];
+perturbedKksAll = [];
+
+for m=1:M
+    
+    Ak = [0 1; -1 0];
+    P_kminus1_given_kminus1 = [1 0; 0 1];
+    xhat_kminus1_given_kminus1 = [1; 1];
+    perturbed_P_kminus1_given_kminus1 = [1 0; 0 1];
+    perturbed_xhat_kminus1_given_kminus1 = [1; 1];
+    C_k = [1 0; 0 1];
+    R_k = [1 0; 0 1];
+    
+    for i=1:(T/dt)
+        %%% Prediction phase
+        % Calculate the noise to be used
+        noise_t_w_v = noisesigmaval.*randn(2,2);% + b;
+        noise_t_w = noise_t_w_v(1,:);
+        noise_t_v = transpose(noise_t_w_v(2,:));
+        % calculate the prediction of x with the noise
+        xhat_k_given_kminus1 = xhat_kminus1_given_kminus1 + dt * xdotWithOneXAndNoise(xhat_kminus1_given_kminus1, noise_t_w);
+        xpredictions(:,i) = xhat_k_given_kminus1;
+        z_k = xhat_k_given_kminus1 + noise_t_v; % would also potentially have a measurement model by which to multiply newx
+        % Calculate the update to the prediction covariance
+        P_k_given_kminus1 = Ak * P_kminus1_given_kminus1 * transpose(Ak); % + Q_k; % Q_k from noise, assume mean 0 so this can be skipped?
+        pkkminus1s(:,:,i) = P_k_given_kminus1;
+        %
+        %%% Measurement update phase
+        S_k = R_k + P_k_given_kminus1;
+        % Calculate Kalman gain assuming using deriv of trace because easier
+        % derivative
+        K_k = P_k_given_kminus1 * transpose((C_k) * inv(C_k * P_k_given_kminus1 * transpose(C_k)) + R_k);
+        % Calculate P_k_given_k which becomes the p_kminus1_given_kminus1 for
+        % the next iteration
+        %xprev = newx;
+        xhat_k_given_k = xhat_k_given_kminus1 + K_k * (z_k - xhat_k_given_kminus1);
+        meas_k_given_k = z_k - xhat_k_given_k;
+
+        xhats(:,i) = xhat_k_given_k;
+
+        P_kminus1_given_kminus1 = P_k_given_kminus1 - K_k * C_k * P_k_given_kminus1;
+        xhat_kminus1_given_kminus1 = xhat_k_given_k;
 
 
 
-for i=1:(T/dt)
-    %%% Prediction phase
-    % Calculate the noise to be used
-    noise_t_w_v = noisesigmaval.*randn(2,2);% + b;
-    noise_t_w = noise_t_w_v(1,:);
-    noise_t_v = transpose(noise_t_w_v(2,:));
-    % calculate the prediction of x with the noise
-    xhat_k_given_kminus1 = xhat_kminus1_given_kminus1 + dt * xdotWithOneXAndNoise(xhat_kminus1_given_kminus1, noise_t_w);
-    xpredictions(:,i) = xhat_k_given_kminus1;
-    z_k = xhat_k_given_kminus1 + noise_t_v; % would also potentially have a measurement model by which to multiply newx
-    % Calculate the update to the prediction covariance
-    P_k_given_kminus1 = Ak * P_kminus1_given_kminus1 * transpose(Ak); % + Q_k; % Q_k from noise, assume mean 0 so this can be skipped?
-    pkkminus1s(:,:,i) = P_k_given_kminus1;
-    %
-    %%% Measurement update phase
-    S_k = R_k + P_k_given_kminus1;
-    % Calculate Kalman gain assuming using deriv of trace because easier
-    % derivative
-    K_k = P_k_given_kminus1 * transpose((C_k) * inv(C_k * P_k_given_kminus1 * transpose(C_k)) + R_k);
-    % Calculate P_k_given_k which becomes the p_kminus1_given_kminus1 for
-    % the next iteration
-    %xprev = newx;
-    xhat_k_given_k = xhat_k_given_kminus1 + K_k * (z_k - xhat_k_given_kminus1);
-    meas_k_given_k = z_k - xhat_k_given_k;
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+        %%% Perturbed prediction phase
+        % Calculate the noise to be used
+        %noise_t_w_v = noisesigmaval.*randn(2,2);% + b;
+        %noise_t_w = noise_t_w_v(1,:);
+        %noise_t_v = transpose(noise_t_w_v(2,:));
+        % calculate the prediction of x with the noise
+        perturbed_xhat_k_given_kminus1 = perturbed_xhat_kminus1_given_kminus1 + dt * xdotWithOneXAndNoise(perturbed_xhat_kminus1_given_kminus1, noise_t_w);
+        perturbedXpredictions(:,i) = perturbed_xhat_k_given_kminus1;
+        perturbed_z_k = perturbed_xhat_k_given_kminus1 + noise_t_v; % would also potentially have a measurement model by which to multiply newx
+        % Calculate the update to the prediction covariance
+        perturbed_P_k_given_kminus1 = Ak * perturbed_P_kminus1_given_kminus1 * transpose(Ak); % + Q_k; % Q_k from noise, assume mean 0 so this can be skipped?
+        pkkminus1s(:,:,i) = perturbed_P_k_given_kminus1;
+        %
+        %%% Perturbed Measurement update phase
+        perturbed_S_k = R_k + perturbed_P_k_given_kminus1;
+        % Calculate Kalman gain assuming using deriv of trace because easier
+        % derivative
+        perturbed_K_k_optimal = perturbed_P_k_given_kminus1 * transpose((C_k) * inv(C_k * perturbed_P_k_given_kminus1 * transpose(C_k)) + R_k);
+        % perturb kk
+        noise_kk_perturb = sqrt(0.1).*randn(2,2);
+        perturbed_K_k = perturbed_K_k_optimal + noise_kk_perturb;
+        perturbedKks(:,:,i) = perturbed_K_k;
+        % Calculate P_k_given_k which becomes the p_kminus1_given_kminus1 for
+        % the next iteration
+        %xprev = newx;
+        perturbed_xhat_k_given_k = perturbed_xhat_k_given_kminus1 + perturbed_K_k * (perturbed_z_k - perturbed_xhat_k_given_kminus1);
+        perturbed_meas_k_given_k = z_k - xhat_k_given_k;
+
+        perturbedXhats(:,i) = perturbed_xhat_k_given_k;
+
+        perturbed_P_kminus1_given_kminus1 = perturbed_P_k_given_kminus1 - K_k * C_k * perturbed_P_k_given_kminus1;
+        perturbed_xhat_kminus1_given_kminus1 = perturbed_xhat_k_given_k;
+    end
     
-    xhats(:,i) = xhat_k_given_k;
-    
-    P_kminus1_given_kminus1 = P_k_given_kminus1 - K_k * C_k * P_k_given_kminus1;
-    xhat_kminus1_given_kminus1 = xhat_k_given_k;
-    
-    
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    
-    
-    %%% Perturbed prediction phase
-    % Calculate the noise to be used
-    %noise_t_w_v = noisesigmaval.*randn(2,2);% + b;
-    %noise_t_w = noise_t_w_v(1,:);
-    %noise_t_v = transpose(noise_t_w_v(2,:));
-    % calculate the prediction of x with the noise
-    perturbed_xhat_k_given_kminus1 = perturbed_xhat_kminus1_given_kminus1 + dt * xdotWithOneXAndNoise(perturbed_xhat_kminus1_given_kminus1, noise_t_w);
-    perturbedXpredictions(:,i) = perturbed_xhat_k_given_kminus1;
-    perturbed_z_k = perturbed_xhat_k_given_kminus1 + noise_t_v; % would also potentially have a measurement model by which to multiply newx
-    % Calculate the update to the prediction covariance
-    perturbed_P_k_given_kminus1 = Ak * perturbed_P_kminus1_given_kminus1 * transpose(Ak); % + Q_k; % Q_k from noise, assume mean 0 so this can be skipped?
-    pkkminus1s(:,:,i) = perturbed_P_k_given_kminus1;
-    %
-    %%% Perturbed Measurement update phase
-    perturbed_S_k = R_k + perturbed_P_k_given_kminus1;
-    % Calculate Kalman gain assuming using deriv of trace because easier
-    % derivative
-    perturbed_K_k_optimal = perturbed_P_k_given_kminus1 * transpose((C_k) * inv(C_k * perturbed_P_k_given_kminus1 * transpose(C_k)) + R_k);
-    % perturb kk
-    noise_kk_perturb = sqrt(0.01).*randn(2,2);
-    perturbed_K_k = perturbed_K_k_optimal + noise_kk_perturb;
-    perturbedKks(:,:,i) = perturbed_K_k;
-    % Calculate P_k_given_k which becomes the p_kminus1_given_kminus1 for
-    % the next iteration
-    %xprev = newx;
-    perturbed_xhat_k_given_k = perturbed_xhat_k_given_kminus1 + perturbed_K_k * (perturbed_z_k - perturbed_xhat_k_given_kminus1);
-    perturbed_meas_k_given_k = z_k - xhat_k_given_k;
-    
-    perturbedXhats(:,i) = perturbed_xhat_k_given_k;
-    
-    perturbed_P_kminus1_given_kminus1 = perturbed_P_k_given_kminus1 - K_k * C_k * perturbed_P_k_given_kminus1;
-    perturbed_xhat_kminus1_given_kminus1 = perturbed_xhat_k_given_k;
+    xhatsAll = [xhatsAll, xhats];
+    xpredictionsAll = [xpredictionsAll, xpredictions];
+    pkkminus1sAll = [pkkminus1sAll, pkkminus1s]; %%%%%%%%%%%%%%%% WRONG APPENDING
+    perturbedXhatsAll = [perturbedXhatsAll, perturbedXhats];
+    perturbedXpredictionsAll = [perturbedXpredictionsAll, perturbedXpredictions];
+    perturbedKksAll = [perturbedKksAll, perturbedKks];%%%%%%%%%%%%%%%% WRONG APPENDING
 end
 
 vals1 = [];
@@ -114,6 +137,17 @@ for i=1:T/dt
     vals4(i) = pkkminus1s(2,2,i);
 end
 
+plot(xpredictionsAll(1,:),xpredictionsAll(2,:),".")
+xlim([-10 10]); 
+ylim([-10 10]);
+title("Position");
+xlabel("x1");
+ylabel("x2");
+hold on;
+plot(perturbedXpredictionsAll(1,:),perturbedXpredictionsAll(2,:),".")
+hold off;
+
+
 % plot(1:T/dt ,vals1);
 % hold on;
 % plot(1:T/dt ,vals2);
@@ -127,15 +161,15 @@ end
 % hold off
 
 
-plot(xpredictions(1,:),xpredictions(2,:));%,".")
-xlim([-10 10]); 
-ylim([-10 10]);
-title("Position");
-xlabel("x1");
-ylabel("x2");
-hold on;
-plot(perturbedXpredictions(1,:),perturbedXpredictions(2,:));%,".")
-hold off;
+% plot(xpredictions(1,:),xpredictions(2,:));%,".")
+% xlim([-10 10]); 
+% ylim([-10 10]);
+% title("Position");
+% xlabel("x1");
+% ylabel("x2");
+% hold on;
+% plot(perturbedXpredictions(1,:),perturbedXpredictions(2,:));%,".")
+% hold off;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
