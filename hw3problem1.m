@@ -1,7 +1,7 @@
 clear
 global M T dt
 
-M = 100;
+M = 1000;
 T = 6;
 dt = 0.1;
 
@@ -65,7 +65,7 @@ for index=1:T/dt
     % PREDICTION    
     for m=1:M
         
-        noisevariance = 0.1;
+        noisevariance = 0.02;
         noisesigmaval = sqrt(noisevariance);
         noisemeanval = 0;
         noise_t_w_v = noisesigmaval.*randn(5,1);% + b;
@@ -135,14 +135,16 @@ for index=1:T/dt
     %    end
     %end
     %hold off
-    plot(x_t(:,1),x_t(:,2),"o")
-    hold on
+    if (mod(index, 10) == 0)
+        plot(x_t(:,1),x_t(:,2),".")
+        hold on
+    end
     
     
 end
 plot(xmeans(1,:),xmeans(2,:), "k-")
-xlim([-1 4]); 
-ylim([-1 5]);
+%xlim([-1 4]); 
+%ylim([-1 5]);
 title("Position");
 xlabel("x1");
 ylabel("x2");
