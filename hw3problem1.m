@@ -48,8 +48,18 @@ for index=1:T/dt
     %%%%%%%%%%%%%%%%%%%        ??????????? How to get the weight, how to
     %%%%%%%%%%%%%%%%%%%        "sample"
     %noise_t = noise_ts(index,:);
+    
+    % the normal distribution taken from stackoverflow and matlab posts on
+    % normal distributions
+%     v = 0.02; % variance
+%     sigma = sqrt(v); % standard deviation
+%     mu = 0; % mean
+%     n = 1000
+%     X = sigma .* randn(n, 1) + mu;
+    
     noiseDist = makedist("Normal");    %%%%%%%%%%%%%%%%%%%%%%%5 change this to get specific variance
     
+    %noise_ts_m = 0.02 * random(noiseDist, [M, 5]);
     noise_ts_m = random(noiseDist, [M, 5]);
     
     % PREDICTION    
@@ -127,6 +137,60 @@ title("Position");
 xlabel("x1");
 ylabel("x2");
 hold off
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%%%%%%%%%%%%%%% do specific variance
+%specific variance val and such
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function xvectdot = xdotWithFullXAndIndex(x, u, index)

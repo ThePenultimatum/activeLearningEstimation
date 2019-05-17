@@ -20,6 +20,10 @@ xhats = [];
 xpredictions = [];
 pkkminus1s = [];
 
+perturbedXhats = [];
+perturbedXpredictions = [];
+perturbedPkkminus1s = [];
+
 for i=1:(T/dt)
     %%% Prediction phase
     % Calculate the noise to be used
