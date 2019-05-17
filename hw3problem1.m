@@ -64,7 +64,17 @@ for index=1:T/dt
     
     % PREDICTION    
     for m=1:M
-        noise_t = noise_ts_m(m,:);
+        
+        noisevariance = 0.1;
+        noisesigmaval = sqrt(noisevariance);
+        noisemeanval = 0;
+        noise_t_w_v = noisesigmaval.*randn(5,1);% + b;
+        %noise_t_w = noise_t_w_v(1,:);
+        %noise_t_v = transpose(noise_t_w_v(2,:));
+        
+        %noise_t = noise_ts_m(m,:);
+        noise_t = noise_t_w_v;
+        
         % sample x_t_m from p(x_t|u_t, x_t-1_m)
         if getOrigTrajectory
             x_t_m_dot = xdotWithOneXAndNoise(x_tminus1(:,m), u_tminus1(:,m), [0;0;0]);%noise_t);

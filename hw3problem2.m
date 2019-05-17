@@ -1,7 +1,7 @@
 clear
 global M T dt
 
-M = 100;
+M = 1;
 T = 1;
 dt = 0.1;
 

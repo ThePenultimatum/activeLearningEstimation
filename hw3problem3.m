@@ -1,8 +1,8 @@
 clear
 global M T dt
 
-M = 1000;
-T = 100;
+M = 10;
+T = 1;
 dt = 0.1;
 
 getOrigTrajectory = false;
