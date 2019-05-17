@@ -379,6 +379,12 @@ hold off;
 % ylabel("time steps");
 % hold off
 
+% plot(1:11, mean_errors_per_filter_all_iterations, "o")
+% xlabel("Filter number (11 is the original")
+% ylabel("Mean(mean(sqrt(transpose(x-xd))))")
+% title("Error in Kalman filters")
+% xlabel("Filter number (11 is the original)")
+
 
 % plot(xpredictions(1,:),xpredictions(2,:));%,".")
 % xlim([-10 10]); 
